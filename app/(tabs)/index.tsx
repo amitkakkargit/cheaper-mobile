@@ -1,98 +1,228 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import * as Location from 'expo-location';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { getAllProducts, searchProducts } from '@/lib/api';
+import type { ProductWithSeller } from '@/lib/types';
+import ProductCard from '@/components/ProductCard';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [products, setProducts] = useState<ProductWithSeller[]>([]);
+  const [query, setQuery] = useState('');
+  const [location, setLocation] = useState('');
+  const [status, setStatus] = useState('Search for nearby products or enter a city.');
+  const [loading, setLoading] = useState(true);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const loadProducts = async (searchQuery = '', searchLocation = '') => {
+    setLoading(true);
+    try {
+      const result = searchQuery || searchLocation
+        ? await searchProducts(searchQuery, searchLocation)
+        : await getAllProducts();
+      setProducts(result);
+      setStatus(result.length ? `Showing ${result.length} deals.` : 'No matching products found.');
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Unable to load products');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const detectLocation = async () => {
+    try {
+      setStatus('Detecting current location...');
+      const { status: permissionStatus } = await Location.requestForegroundPermissionsAsync();
+      if (permissionStatus !== 'granted') {
+        setStatus('Location permission denied. Enter a city manually.');
+        return;
+      }
+
+      const position = await Location.getCurrentPositionAsync({ accuracy: Location.LocationAccuracy.Low });
+      const places = await Location.reverseGeocodeAsync(position.coords);
+      const place = places[0];
+
+      if (!place) {
+        setStatus('Unable to find a city for your location.');
+        return;
+      }
+
+      const detectedLocation = [place.city || place.region, place.region, place.country]
+        .filter(Boolean)
+        .join(', ');
+
+      setLocation(detectedLocation);
+      setStatus(`Detected location: ${detectedLocation}`);
+      loadProducts(query, detectedLocation);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Unable to detect location');
+    }
+  };
+
+  const handleSearch = () => {
+    loadProducts(query, location);
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.brand}>Cheaper</Text>
+        <Text style={styles.subtitle}>Nearby deals and local pickup products.</Text>
+      </View>
+      <View style={styles.searchCard}>
+        <Text style={styles.label}>Search</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Search by title or category"
+          placeholderTextColor="#94a3b8"
+          value={query}
+          onChangeText={setQuery}
+          returnKeyType="search"
+          onSubmitEditing={handleSearch}
+        />
+        <Text style={styles.label}>Location</Text>
+        <View style={styles.locationRow}>
+          <TextInput
+            style={[styles.input, styles.locationInput]}
+            placeholder="Enter city or state"
+            placeholderTextColor="#94a3b8"
+            value={location}
+            onChangeText={setLocation}
+          />
+          <TouchableOpacity style={styles.locationButton} onPress={detectLocation}>
+            <Text style={styles.locationButtonText}>Detect</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.actionRow}>
+          <TouchableOpacity style={styles.primaryButton} onPress={handleSearch}>
+            <Text style={styles.primaryButtonText}>Search</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => {
+              setQuery('');
+              setLocation('');
+              loadProducts();
+            }}
+          >
+            <Text style={styles.secondaryButtonText}>Clear</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      <Text style={styles.status}>{status}</Text>
+      {loading ? (
+        <ActivityIndicator size="large" color="#1d4ed8" style={styles.loader} />
+      ) : (
+        <FlatList
+          data={products}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <ProductCard product={item} />}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#f8fafc',
+  },
+  header: {
+    marginBottom: 12,
+  },
+  brand: {
+    color: '#0f172a',
+    fontSize: 32,
+    fontWeight: '800',
+  },
+  subtitle: {
+    marginTop: 4,
+    color: '#475569',
+    fontSize: 14,
+  },
+  searchCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 22,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
+  },
+  label: {
+    color: '#64748b',
+    marginBottom: 6,
+    fontWeight: '700',
+  },
+  input: {
+    backgroundColor: '#f1f5f9',
+    borderRadius: 14,
+    padding: 12,
+    color: '#0f172a',
+    marginBottom: 12,
+  },
+  locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  locationInput: {
+    flex: 1,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  locationButton: {
+    borderRadius: 14,
+    backgroundColor: '#1d4ed8',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  locationButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  primaryButton: {
+    flex: 1,
+    backgroundColor: '#1d4ed8',
+    borderRadius: 16,
+    padding: 14,
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    color: '#ffffff',
+    fontWeight: '700',
+  },
+  secondaryButton: {
+    flex: 1,
+    backgroundColor: '#e2e8f0',
+    borderRadius: 16,
+    padding: 14,
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    color: '#0f172a',
+    fontWeight: '700',
+  },
+  status: {
+    color: '#334155',
+    marginBottom: 12,
+  },
+  loader: {
+    marginTop: 32,
+  },
+  list: {
+    paddingBottom: 24,
   },
 });
