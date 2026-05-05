@@ -1,11 +1,17 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { useLocalSearchParams } from "expo-router";
 
-import { getSellerById, getSellerRatings, getSellerProducts } from '@/lib/api';
-import type { ApiReview, ProductWithSeller, Seller } from '@/lib/types';
-import SellerBadge from '@/components/SellerBadge';
-import ProductCard from '@/components/ProductCard';
+import { getSellerById, getSellerRatings, getSellerProducts } from "@/lib/api";
+import type { ApiReview, ProductWithSeller, Seller } from "@/lib/types";
+import SellerBadge from "@/components/SellerBadge";
+import ProductCard from "@/components/ProductCard";
 
 export default function SellerDetailScreen() {
   const params = useLocalSearchParams() as { id: string };
@@ -57,15 +63,21 @@ export default function SellerDetailScreen() {
       <SellerBadge seller={seller} />
       <View style={styles.section}>
         <Text style={styles.sectionHeading}>About seller</Text>
-        <Text style={styles.detailText}>{seller.bio ?? 'No bio available.'}</Text>
+        <Text style={styles.detailText}>
+          {seller.bio ?? "No bio available."}
+        </Text>
         <Text style={styles.detailText}>Located in {seller.location}</Text>
-        <Text style={styles.detailText}>Rating: {reviewAverage.toFixed(1)} ({reviews.length} reviews)</Text>
+        <Text style={styles.detailText}>
+          Rating: {reviewAverage.toFixed(1)} ({reviews.length} reviews)
+        </Text>
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionHeading}>Products by this seller</Text>
         {products.length ? (
-          products.map((product) => <ProductCard key={product.id} product={product} />)
+          products.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))
         ) : (
           <Text style={styles.detailText}>No active listings yet.</Text>
         )}
@@ -76,9 +88,13 @@ export default function SellerDetailScreen() {
         {reviews.length ? (
           reviews.map((review) => (
             <View key={review.id} style={styles.reviewCard}>
-              <Text style={styles.reviewAuthor}>{review.user?.name ?? 'Buyer'}</Text>
+              <Text style={styles.reviewAuthor}>
+                {review.user?.name ?? "Buyer"}
+              </Text>
               <Text style={styles.reviewRating}>Rating: {review.rating}/5</Text>
-              <Text style={styles.reviewText}>{review.comment ?? 'No review text.'}</Text>
+              <Text style={styles.reviewText}>
+                {review.comment ?? "No review text."}
+              </Text>
             </View>
           ))
         ) : (
@@ -96,49 +112,49 @@ const styles = StyleSheet.create({
   },
   centered: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f8fafc",
   },
   section: {
     marginTop: 20,
     gap: 10,
   },
   sectionHeading: {
-    color: '#0f172a',
+    color: "#0f172a",
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   detailText: {
-    color: '#475569',
+    color: "#475569",
     lineHeight: 22,
   },
   reviewCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 18,
     padding: 14,
     marginTop: 10,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
     elevation: 2,
   },
   reviewAuthor: {
-    color: '#0f172a',
-    fontWeight: '700',
+    color: "#0f172a",
+    fontWeight: "700",
     marginBottom: 6,
   },
   reviewRating: {
-    color: '#2563eb',
+    color: "#2563eb",
     marginBottom: 6,
   },
   reviewText: {
-    color: '#475569',
+    color: "#475569",
     lineHeight: 20,
   },
   errorText: {
-    color: '#b91c1c',
+    color: "#b91c1c",
     fontSize: 16,
   },
 });

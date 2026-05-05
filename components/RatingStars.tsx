@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 interface RatingStarsProps {
   rating: number;
@@ -16,7 +16,11 @@ export default function RatingStars({
   onRatingChange,
 }: RatingStarsProps) {
   return (
-    <View style={styles.ratingRow} accessibilityRole="image" accessibilityLabel={label}>
+    <View
+      style={styles.ratingRow}
+      accessibilityRole="image"
+      accessibilityLabel={label}
+    >
       {stars.map((value) => {
         const filled = rating >= value;
         return (
@@ -29,7 +33,12 @@ export default function RatingStars({
               interactive && pressed && styles.starPressed,
             ]}
           >
-            <Text style={[styles.star, filled ? styles.starFilled : styles.starOutline]}>
+            <Text
+              style={[
+                styles.star,
+                filled ? styles.starFilled : styles.starOutline,
+              ]}
+            >
               ★
             </Text>
           </Pressable>
@@ -42,10 +51,10 @@ export default function RatingStars({
 
 const styles = StyleSheet.create({
   ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
   },
   starButton: {
     padding: 4,
@@ -57,13 +66,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   starFilled: {
-    color: '#f59e0b',
+    color: "#f59e0b",
   },
   starOutline: {
-    color: '#94a3b8',
+    color: "#94a3b8",
   },
   ratingValue: {
     fontSize: 14,
-    color: '#334155',
+    color: "#334155",
   },
 });

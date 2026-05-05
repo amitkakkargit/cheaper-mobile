@@ -1,5 +1,11 @@
-import { useMemo, useState } from 'react';
-import { Image, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useMemo, useState } from "react";
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from "react-native";
 
 interface ImageCarouselProps {
   images: string[];
@@ -62,8 +68,8 @@ const styles = StyleSheet.create({
     minHeight: 220,
   },
   dots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     gap: 6,
     marginTop: 12,
   },
@@ -71,9 +77,9 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#cbd5e1',
+    backgroundColor: "#cbd5e1",
   },
   activeDot: {
-    backgroundColor: '#1d4ed8',
+    backgroundColor: "#1d4ed8",
   },
 });

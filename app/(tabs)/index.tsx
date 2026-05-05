@@ -1,28 +1,45 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import * as Location from 'expo-location';
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import * as Location from "expo-location";
 
-import { getAllProducts, searchProducts } from '@/lib/api';
-import type { ProductWithSeller } from '@/lib/types';
-import ProductCard from '@/components/ProductCard';
+import { getAllProducts, searchProducts } from "@/lib/api";
+import type { ProductWithSeller } from "@/lib/types";
+import ProductCard from "@/components/ProductCard";
 
 export default function HomeScreen() {
   const [products, setProducts] = useState<ProductWithSeller[]>([]);
-  const [query, setQuery] = useState('');
-  const [location, setLocation] = useState('');
-  const [status, setStatus] = useState('Search for nearby products or enter a city.');
+  const [query, setQuery] = useState("");
+  const [location, setLocation] = useState("");
+  const [status, setStatus] = useState(
+    "Search for nearby products or enter a city.",
+  );
   const [loading, setLoading] = useState(true);
 
-  const loadProducts = async (searchQuery = '', searchLocation = '') => {
+  const loadProducts = async (searchQuery = "", searchLocation = "") => {
     setLoading(true);
     try {
-      const result = searchQuery || searchLocation
-        ? await searchProducts(searchQuery, searchLocation)
-        : await getAllProducts();
+      const result =
+        searchQuery || searchLocation
+          ? await searchProducts(searchQuery, searchLocation)
+          : await getAllProducts();
       setProducts(result);
-      setStatus(result.length ? `Showing ${result.length} deals.` : 'No matching products found.');
+      setStatus(
+        result.length
+          ? `Showing ${result.length} deals.`
+          : "No matching products found.",
+      );
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Unable to load products');
+      setStatus(
+        error instanceof Error ? error.message : "Unable to load products",
+      );
     } finally {
       setLoading(false);
     }
@@ -34,31 +51,40 @@ export default function HomeScreen() {
 
   const detectLocation = async () => {
     try {
-      setStatus('Detecting current location...');
-      const { status: permissionStatus } = await Location.requestForegroundPermissionsAsync();
-      if (permissionStatus !== 'granted') {
-        setStatus('Location permission denied. Enter a city manually.');
+      setStatus("Detecting current location...");
+      const { status: permissionStatus } =
+        await Location.requestForegroundPermissionsAsync();
+      if (permissionStatus !== "granted") {
+        setStatus("Location permission denied. Enter a city manually.");
         return;
       }
 
-      const position = await Location.getCurrentPositionAsync({ accuracy: Location.LocationAccuracy.Low });
+      const position = await Location.getCurrentPositionAsync({
+        accuracy: Location.LocationAccuracy.Low,
+      });
       const places = await Location.reverseGeocodeAsync(position.coords);
       const place = places[0];
 
       if (!place) {
-        setStatus('Unable to find a city for your location.');
+        setStatus("Unable to find a city for your location.");
         return;
       }
 
-      const detectedLocation = [place.city || place.region, place.region, place.country]
+      const detectedLocation = [
+        place.city || place.region,
+        place.region,
+        place.country,
+      ]
         .filter(Boolean)
-        .join(', ');
+        .join(", ");
 
       setLocation(detectedLocation);
       setStatus(`Detected location: ${detectedLocation}`);
       loadProducts(query, detectedLocation);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Unable to detect location');
+      setStatus(
+        error instanceof Error ? error.message : "Unable to detect location",
+      );
     }
   };
 
@@ -70,7 +96,9 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.brand}>Cheaper</Text>
-        <Text style={styles.subtitle}>Nearby deals and local pickup products.</Text>
+        <Text style={styles.subtitle}>
+          Nearby deals and local pickup products.
+        </Text>
       </View>
       <View style={styles.searchCard}>
         <Text style={styles.label}>Search</Text>
@@ -92,7 +120,10 @@ export default function HomeScreen() {
             value={location}
             onChangeText={setLocation}
           />
-          <TouchableOpacity style={styles.locationButton} onPress={detectLocation}>
+          <TouchableOpacity
+            style={styles.locationButton}
+            onPress={detectLocation}
+          >
             <Text style={styles.locationButtonText}>Detect</Text>
           </TouchableOpacity>
         </View>
@@ -103,8 +134,8 @@ export default function HomeScreen() {
           <TouchableOpacity
             style={styles.secondaryButton}
             onPress={() => {
-              setQuery('');
-              setLocation('');
+              setQuery("");
+              setLocation("");
               loadProducts();
             }}
           >
@@ -132,47 +163,47 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#f8fafc',
+    backgroundColor: "#f8fafc",
   },
   header: {
     marginBottom: 12,
   },
   brand: {
-    color: '#0f172a',
+    color: "#0f172a",
     fontSize: 32,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   subtitle: {
     marginTop: 4,
-    color: '#475569',
+    color: "#475569",
     fontSize: 14,
   },
   searchCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 22,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
   },
   label: {
-    color: '#64748b',
+    color: "#64748b",
     marginBottom: 6,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   input: {
-    backgroundColor: '#f1f5f9',
+    backgroundColor: "#f1f5f9",
     borderRadius: 14,
     padding: 12,
-    color: '#0f172a',
+    color: "#0f172a",
     marginBottom: 12,
   },
   locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
   locationInput: {
@@ -180,43 +211,43 @@ const styles = StyleSheet.create({
   },
   locationButton: {
     borderRadius: 14,
-    backgroundColor: '#1d4ed8',
+    backgroundColor: "#1d4ed8",
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   locationButtonText: {
-    color: '#fff',
-    fontWeight: '700',
+    color: "#fff",
+    fontWeight: "700",
   },
   actionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     gap: 12,
   },
   primaryButton: {
     flex: 1,
-    backgroundColor: '#1d4ed8',
+    backgroundColor: "#1d4ed8",
     borderRadius: 16,
     padding: 14,
-    alignItems: 'center',
+    alignItems: "center",
   },
   primaryButtonText: {
-    color: '#ffffff',
-    fontWeight: '700',
+    color: "#ffffff",
+    fontWeight: "700",
   },
   secondaryButton: {
     flex: 1,
-    backgroundColor: '#e2e8f0',
+    backgroundColor: "#e2e8f0",
     borderRadius: 16,
     padding: 14,
-    alignItems: 'center',
+    alignItems: "center",
   },
   secondaryButtonText: {
-    color: '#0f172a',
-    fontWeight: '700',
+    color: "#0f172a",
+    fontWeight: "700",
   },
   status: {
-    color: '#334155',
+    color: "#334155",
     marginBottom: 12,
   },
   loader: {

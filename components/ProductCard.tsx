@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
-import { useRouter } from 'expo-router';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { ProductWithSeller } from '@/lib/types';
-import RatingStars from './RatingStars';
+import { useMemo } from "react";
+import { useRouter } from "expo-router";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import type { ProductWithSeller } from "@/lib/types";
+import RatingStars from "./RatingStars";
 
 interface ProductCardProps {
   product: ProductWithSeller;
@@ -11,7 +11,10 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
   const images = useMemo(
-    () => (product.images?.filter((image) => Boolean(image)) ?? [product.imageUrl]).slice(0, 1),
+    () =>
+      (
+        product.images?.filter((image) => Boolean(image)) ?? [product.imageUrl]
+      ).slice(0, 1),
     [product.imageUrl, product.images],
   );
 
@@ -22,7 +25,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       onPress={() => router.push(`/product/${product.id}`)}
     >
       <Image
-        source={{ uri: images[0] || 'https://via.placeholder.com/300x200' }}
+        source={{ uri: images[0] || "https://via.placeholder.com/300x200" }}
         style={styles.image}
       />
       <View style={styles.body}>
@@ -33,9 +36,14 @@ export default function ProductCard({ product }: ProductCardProps) {
         <Text style={styles.title}>{product.title}</Text>
         <Text style={styles.subtitle}>{product.sellerName}</Text>
         <View style={styles.ratingRow}>
-          <RatingStars rating={product.productRatingAverage} label={`${product.productRatingAverage.toFixed(1)} out of 5`} />
+          <RatingStars
+            rating={product.productRatingAverage}
+            label={`${product.productRatingAverage.toFixed(1)} out of 5`}
+          />
           <Text style={styles.ratingCount}>
-            {product.productRatingCount > 0 ? `${product.productRatingCount} reviews` : 'No reviews'}
+            {product.productRatingCount > 0
+              ? `${product.productRatingCount} reviews`
+              : "No reviews"}
           </Text>
         </View>
         <View style={styles.priceRow}>
@@ -49,67 +57,67 @@ export default function ProductCard({ product }: ProductCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 18,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
     elevation: 4,
   },
   image: {
-    width: '100%',
+    width: "100%",
     height: 180,
-    backgroundColor: '#cbd5e1',
+    backgroundColor: "#cbd5e1",
   },
   body: {
     padding: 14,
     gap: 8,
   },
   badgeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   tag: {
-    color: '#2563eb',
-    fontWeight: '700',
+    color: "#2563eb",
+    fontWeight: "700",
   },
   location: {
-    color: '#64748b',
+    color: "#64748b",
   },
   title: {
-    color: '#0f172a',
+    color: "#0f172a",
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   subtitle: {
-    color: '#475569',
+    color: "#475569",
   },
   ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
   },
   ratingCount: {
-    color: '#64748b',
+    color: "#64748b",
     fontSize: 12,
   },
   priceRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
+    flexDirection: "row",
+    alignItems: "baseline",
     gap: 8,
   },
   price: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#0f172a',
+    fontWeight: "700",
+    color: "#0f172a",
   },
   originalPrice: {
     fontSize: 14,
-    color: '#64748b',
-    textDecorationLine: 'line-through',
+    color: "#64748b",
+    textDecorationLine: "line-through",
   },
 });
