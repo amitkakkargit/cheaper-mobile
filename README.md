@@ -12,6 +12,12 @@ Expo and React Native mobile client for the Cheaper local marketplace. It connec
 
 For physical device testing, the phone must be able to reach the API over your LAN. Use your machine's LAN IP and make sure the API CORS settings allow that origin.
 
+Set `EXPO_PUBLIC_API_BASE_URL` to override those defaults. For the deployed Render API:
+
+```env
+EXPO_PUBLIC_API_BASE_URL="https://cheaper-api-5oio.onrender.com"
+```
+
 ## Setup
 
 1. Start PostgreSQL and `../cheaper-api`.
@@ -21,13 +27,25 @@ For physical device testing, the phone must be able to reach the API over your L
 npm install
 ```
 
-3. Start Expo:
+3. Create local environment settings when you want to use the hosted API:
+
+```powershell
+Copy-Item .env.example .env.local
+```
+
+Then set:
+
+```env
+EXPO_PUBLIC_API_BASE_URL="https://cheaper-api-5oio.onrender.com"
+```
+
+4. Start Expo:
 
 ```powershell
 npm run start
 ```
 
-4. Choose a target:
+5. Choose a target:
 
 ```powershell
 npm run android

@@ -24,6 +24,12 @@ function cacheCurrentUser(user: CurrentUser | null) {
 }
 
 function getConfiguredApiBaseUrl() {
+  const configuredUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
+
+  if (configuredUrl && configuredUrl !== '/') {
+    return configuredUrl.replace(/\/$/, '');
+  }
+
   if (Platform.OS === 'web') {
     const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
     return hostname === 'localhost' ? DEFAULT_API_BASE_URL : `http://${hostname}:3001`;
