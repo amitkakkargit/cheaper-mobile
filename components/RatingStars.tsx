@@ -8,6 +8,17 @@ interface RatingStarsProps {
 }
 
 const stars = [1, 2, 3, 4, 5];
+const ratingOptions = Array.from({ length: 10 }, (_, index) => (index + 1) / 2);
+
+export const roundRatingToHalf = (rating: number) =>
+  Math.max(0, Math.min(5, Math.round(rating * 2) / 2));
+
+const getFillPercent = (rating: number, star: number) => {
+  const rounded = roundRatingToHalf(rating);
+  if (rounded >= star) return "100%";
+  if (rounded >= star - 0.5) return "50%";
+  return "0%";
+};
 
 export default function RatingStars({
   rating,
@@ -21,29 +32,37 @@ export default function RatingStars({
       accessibilityRole="image"
       accessibilityLabel={label}
     >
-      {stars.map((value) => {
-        const filled = rating >= value;
-        return (
-          <Pressable
-            key={value}
-            onPress={() => interactive && onRatingChange?.(value)}
-            disabled={!interactive}
-            style={({ pressed }) => [
-              styles.starButton,
-              interactive && pressed && styles.starPressed,
-            ]}
-          >
-            <Text
+      <View style={styles.starVisuals} pointerEvents="none">
+        {stars.map((value) => (
+          <View key={value} style={styles.starShell}>
+            <Text style={[styles.star, styles.starOutline]}>★</Text>
+            <View
               style={[
-                styles.star,
-                filled ? styles.starFilled : styles.starOutline,
+                styles.starFillClip,
+                { width: getFillPercent(rating, value) },
               ]}
             >
-              ★
-            </Text>
-          </Pressable>
-        );
-      })}
+              <Text style={[styles.star, styles.starFilled]}>★</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+      {interactive ? (
+        <View style={styles.hitGrid}>
+          {ratingOptions.map((value) => (
+            <Pressable
+              key={value}
+              accessibilityRole="button"
+              accessibilityLabel={`Rate ${value.toFixed(1)} out of 5`}
+              onPress={() => onRatingChange?.(value)}
+              style={({ pressed }) => [
+                styles.halfButton,
+                pressed && styles.starPressed,
+              ]}
+            />
+          ))}
+        </View>
+      ) : null}
       <Text style={styles.ratingValue}>{rating.toFixed(1)}</Text>
     </View>
   );
@@ -55,9 +74,35 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     flexWrap: "wrap",
+    position: "relative",
   },
-  starButton: {
-    padding: 4,
+  starVisuals: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  starShell: {
+    width: 20,
+    height: 24,
+    position: "relative",
+  },
+  starFillClip: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    overflow: "hidden",
+  },
+  hitGrid: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    width: 124,
+    height: 32,
+    flexDirection: "row",
+  },
+  halfButton: {
+    width: 12.4,
+    height: 32,
   },
   starPressed: {
     opacity: 0.65,

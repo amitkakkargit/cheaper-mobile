@@ -6,6 +6,9 @@ import type {
   Product,
   ProductWithSeller,
   Seller,
+  CreateSupportTicketInput,
+  SupportTicketResponse,
+  TransactionStatus,
 } from './types';
 
 const TOKEN_KEY = 'cheaperAccessToken';
@@ -194,6 +197,8 @@ export async function getProductsBySeller(sellerId: string): Promise<ProductWith
   return products.map(enrichProduct);
 }
 
+export const getSellerProducts = getProductsBySeller;
+
 export async function getSellerRatings(sellerId: string): Promise<ApiReview[]> {
   return apiFetch<ApiReview[]>(`/seller-reviews/${encodeURIComponent(sellerId)}`);
 }
@@ -227,16 +232,37 @@ export async function postSellerReview(sellerId: string, productId: string, rati
   });
 }
 
-export async function confirmBought(productId: string) {
-  return apiFetch('/products/confirm-bought', {
+export async function getTransactionStatus(productId: string) {
+  return apiFetch<TransactionStatus>(`/products/${encodeURIComponent(productId)}/transaction-status`);
+}
+
+export async function markProductReceived(productId: string) {
+  return apiFetch('/products/mark-received', {
     method: 'POST',
     body: JSON.stringify({ productId }),
   });
 }
 
-export async function confirmSold(productId: string) {
-  return apiFetch('/products/confirm-sold', {
+export async function markProductSold(productId: string) {
+  return apiFetch('/products/mark-sold', {
     method: 'POST',
     body: JSON.stringify({ productId }),
+  });
+}
+
+export async function postBuyerReview(productId: string, buyerId: string, rating: number, comment: string) {
+  return apiFetch('/buyer-reviews', {
+    method: 'POST',
+    body: JSON.stringify({ productId, buyerId, rating, comment }),
+  });
+}
+
+export const confirmBought = markProductReceived;
+export const confirmSold = markProductSold;
+
+export async function createSupportTicket(data: CreateSupportTicketInput) {
+  return apiFetch<SupportTicketResponse>('/support-tickets', {
+    method: 'POST',
+    body: JSON.stringify(data),
   });
 }

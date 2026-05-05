@@ -28,6 +28,20 @@ export default function RootLayout() {
             title: "Details",
           }}
         />
+        <Stack.Screen
+          name="privacy-settings"
+          options={{
+            headerShown: true,
+            title: "Privacy Settings",
+          }}
+        />
+        <Stack.Screen
+          name="support"
+          options={{
+            headerShown: true,
+            title: "Help & Support",
+          }}
+        />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

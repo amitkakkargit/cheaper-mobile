@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Link } from "expo-router";
 
 import {
   clearUserSession,
@@ -155,6 +156,24 @@ export default function ProfileScreen() {
             >
               <Text style={styles.primaryButtonText}>Save profile</Text>
             </TouchableOpacity>
+            <Link href="/privacy-settings" asChild>
+              <TouchableOpacity
+                accessibilityRole="button"
+                style={styles.secondaryButton}
+              >
+                <Text style={styles.secondaryButtonText}>
+                  Privacy Settings
+                </Text>
+              </TouchableOpacity>
+            </Link>
+            <Link href="/support" asChild>
+              <TouchableOpacity
+                accessibilityRole="button"
+                style={styles.secondaryButton}
+              >
+                <Text style={styles.secondaryButtonText}>Help & Support</Text>
+              </TouchableOpacity>
+            </Link>
             <TouchableOpacity style={styles.secondaryButton} onPress={logout}>
               <Text style={styles.secondaryButtonText}>Sign out</Text>
             </TouchableOpacity>
