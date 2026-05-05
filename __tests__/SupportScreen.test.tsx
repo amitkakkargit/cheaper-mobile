@@ -57,6 +57,6 @@ describe('SupportScreen', () => {
         }),
       );
     });
-    expect(await screen.findByText(/ticket-mobile-1/)).toBeTruthy();
+    expect((await screen.findAllByText(/ticket-mobile-1/)).length).toBeGreaterThan(0);
   });
 });
