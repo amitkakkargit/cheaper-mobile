@@ -1,3 +1,4 @@
+import { Link } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -9,10 +10,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Link } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
+import FormNotification, {
+  type NotificationState,
+} from "@/components/FormNotification";
 import {
   clearUserSession,
+  getCachedCurrentUser,
   getCurrentUser,
   requestEmailOtp,
   requestPhoneOtp,
@@ -21,27 +26,39 @@ import {
   verifyPhoneOtp,
 } from "@/lib/api";
 import { CurrentUser } from "@/lib/types";
-import FormNotification, {
-  type NotificationState,
-} from "@/components/FormNotification";
 
 type LoginMode = "phone" | "email";
 
+function initialsFor(user: CurrentUser | null) {
+  const value = user?.name || user?.email || user?.phone || "?";
+  return value.slice(0, 2).toUpperCase();
+}
+
 export default function ProfileScreen() {
+  const cachedUser = getCachedCurrentUser();
   const [mode, setMode] = useState<LoginMode>("phone");
   const [target, setTarget] = useState("");
   const [otp, setOtp] = useState("");
-  const [user, setUser] = useState<CurrentUser | null>(null);
-  const [name, setName] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
+  const [user, setUser] = useState<CurrentUser | null>(cachedUser);
+  const [isAuthReady, setIsAuthReady] = useState(Boolean(cachedUser));
+  const [name, setName] = useState(cachedUser?.name ?? "");
+  const [avatarUrl, setAvatarUrl] = useState(cachedUser?.avatarUrl ?? "");
   const [notification, setNotification] = useState<NotificationState>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     getCurrentUser().then((current) => {
+      if (!isMounted) return;
       setUser(current);
       setName(current?.name ?? "");
       setAvatarUrl(current?.avatarUrl ?? "");
+      setIsAuthReady(true);
     });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const requestOtp = async () => {
@@ -112,133 +129,208 @@ export default function ProfileScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <ScrollView
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <Text style={styles.header}>Account</Text>
-        <Text style={styles.subtitle}>
-          Sign in and manage your buyer or seller profile.
-        </Text>
-
-        {user ? (
-          <View style={styles.card}>
-            <Text style={styles.label}>Signed in as</Text>
-            <Text style={styles.value}>
-              {user.name ?? user.email ?? user.phone ?? "Anonymous"}
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.pageHeader}>
+            <Text style={styles.header}>Account</Text>
+            <Text style={styles.subtitle}>
+              Manage your profile, privacy, support, and sign-in options.
             </Text>
-            <Text style={styles.label}>User ID</Text>
-            <Text style={styles.value}>{user.id}</Text>
-            <Text style={styles.label}>Avatar URL</Text>
-            <TextInput
-              style={styles.input}
-              value={avatarUrl}
-              onChangeText={setAvatarUrl}
-              placeholder="Avatar image URL"
-              placeholderTextColor="#94a3b8"
-              autoCapitalize="none"
-            />
-            <Text style={styles.label}>Display name</Text>
-            <TextInput
-              style={styles.input}
-              value={name}
-              onChangeText={setName}
-              placeholder="Full name"
-              placeholderTextColor="#94a3b8"
-            />
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={saveProfile}
-            >
-              <Text style={styles.primaryButtonText}>Save profile</Text>
-            </TouchableOpacity>
-            <Link href="/privacy-settings" asChild>
-              <TouchableOpacity
-                accessibilityRole="button"
-                style={styles.secondaryButton}
-              >
-                <Text style={styles.secondaryButtonText}>
-                  Privacy Settings
-                </Text>
-              </TouchableOpacity>
-            </Link>
-            <Link href="/support" asChild>
-              <TouchableOpacity
-                accessibilityRole="button"
-                style={styles.secondaryButton}
-              >
-                <Text style={styles.secondaryButtonText}>Help & Support</Text>
-              </TouchableOpacity>
-            </Link>
-            <TouchableOpacity style={styles.secondaryButton} onPress={logout}>
-              <Text style={styles.secondaryButtonText}>Sign out</Text>
-            </TouchableOpacity>
           </View>
-        ) : (
-          <View style={styles.card}>
-            <View style={styles.toggleRow}>
+
+          {user ? (
+            <>
+              <View style={styles.profileHeaderCard}>
+                <View style={styles.avatarCircle}>
+                  <Text style={styles.avatarText}>{initialsFor(user)}</Text>
+                </View>
+                <View style={styles.profileText}>
+                  <Text style={styles.profileName}>
+                    {user.name ?? user.email ?? user.phone ?? "Marketplace member"}
+                  </Text>
+                  <Text style={styles.profileMeta}>
+                    {user.email ?? user.phone ?? "Signed in"}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.groupCard}>
+                <View style={styles.groupHeader}>
+                  <Text style={styles.groupTitle}>Public profile</Text>
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    onPress={saveProfile}
+                    style={styles.compactPrimaryButton}
+                  >
+                    <Text style={styles.compactPrimaryText}>Save</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.label}>Display name</Text>
+                <TextInput
+                  style={styles.input}
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Full name"
+                  placeholderTextColor="#94a3b8"
+                />
+                <Text style={styles.label}>Avatar URL</Text>
+                <TextInput
+                  style={styles.input}
+                  value={avatarUrl}
+                  onChangeText={setAvatarUrl}
+                  placeholder="Avatar image URL"
+                  placeholderTextColor="#94a3b8"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View style={styles.settingsGroup}>
+                <Link href="/privacy-settings" asChild>
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    style={styles.settingsRow}
+                  >
+                    <View>
+                      <Text style={styles.settingsTitle}>Privacy Settings</Text>
+                      <Text style={styles.settingsMeta}>
+                        Visibility, location, and recommendations
+                      </Text>
+                    </View>
+                    <Text style={styles.chevron}>{">"}</Text>
+                  </TouchableOpacity>
+                </Link>
+                <Link href="/support" asChild>
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    style={styles.settingsRow}
+                  >
+                    <View>
+                      <Text style={styles.settingsTitle}>Help & Support</Text>
+                      <Text style={styles.settingsMeta}>
+                        Report bugs or contact support
+                      </Text>
+                    </View>
+                    <Text style={styles.chevron}>{">"}</Text>
+                  </TouchableOpacity>
+                </Link>
+              </View>
+
               <TouchableOpacity
-                style={[
-                  styles.toggleButton,
-                  mode === "phone" && styles.activeToggle,
-                ]}
-                onPress={() => setMode("phone")}
+                accessibilityRole="button"
+                style={styles.logoutButton}
+                onPress={logout}
               >
-                <Text style={styles.toggleText}>Phone</Text>
+                <Text style={styles.logoutText}>Sign out</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.toggleButton,
-                  mode === "email" && styles.activeToggle,
-                ]}
-                onPress={() => setMode("email")}
-              >
-                <Text style={styles.toggleText}>Email</Text>
+            </>
+          ) : !isAuthReady ? (
+            <View style={styles.groupCard} accessibilityLabel="Checking account">
+              <Text style={styles.groupTitle}>Checking account</Text>
+              <Text style={styles.helperText}>
+                Keeping your profile ready while we confirm your session.
+              </Text>
+              <View style={styles.checkingRow}>
+                <View style={styles.checkingAvatar} />
+                <View style={styles.checkingTextBlock}>
+                  <View style={styles.checkingLineWide} />
+                  <View style={styles.checkingLineShort} />
+                </View>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.groupCard}>
+              <Text style={styles.groupTitle}>Sign in</Text>
+              <Text style={styles.helperText}>
+                Use email or phone OTP to access seller tools, reviews, and
+                handoff confirmations.
+              </Text>
+              <View style={styles.segmentedControl}>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  style={[
+                    styles.segmentButton,
+                    mode === "phone" && styles.activeSegment,
+                  ]}
+                  onPress={() => setMode("phone")}
+                >
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      mode === "phone" && styles.activeSegmentText,
+                    ]}
+                  >
+                    Phone
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  style={[
+                    styles.segmentButton,
+                    mode === "email" && styles.activeSegment,
+                  ]}
+                  onPress={() => setMode("email")}
+                >
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      mode === "email" && styles.activeSegmentText,
+                    ]}
+                  >
+                    Email
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.label}>
+                {mode === "phone" ? "Phone number" : "Email address"}
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={target}
+                onChangeText={setTarget}
+                placeholder={
+                  mode === "phone" ? "+919876543210" : "you@example.com"
+                }
+                placeholderTextColor="#94a3b8"
+                autoCapitalize="none"
+                keyboardType={mode === "phone" ? "phone-pad" : "email-address"}
+              />
+              <TouchableOpacity style={styles.secondaryButton} onPress={requestOtp}>
+                <Text style={styles.secondaryButtonText}>Request OTP</Text>
+              </TouchableOpacity>
+              <Text style={styles.label}>OTP code</Text>
+              <TextInput
+                style={styles.input}
+                value={otp}
+                onChangeText={setOtp}
+                placeholder="Enter OTP"
+                placeholderTextColor="#94a3b8"
+                keyboardType="number-pad"
+              />
+              <TouchableOpacity style={styles.primaryButton} onPress={verifyOtp}>
+                <Text style={styles.primaryButtonText}>Verify OTP</Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.label}>
-              {mode === "phone" ? "Phone number" : "Email address"}
-            </Text>
-            <TextInput
-              style={styles.input}
-              value={target}
-              onChangeText={setTarget}
-              placeholder={
-                mode === "phone" ? "+919876543210" : "you@example.com"
-              }
-              placeholderTextColor="#94a3b8"
-              autoCapitalize="none"
-              keyboardType={mode === "phone" ? "phone-pad" : "email-address"}
-            />
-            <TouchableOpacity style={styles.primaryButton} onPress={requestOtp}>
-              <Text style={styles.primaryButtonText}>Request OTP</Text>
-            </TouchableOpacity>
-            <Text style={[styles.label, styles.marginTop]}>OTP code</Text>
-            <TextInput
-              style={styles.input}
-              value={otp}
-              onChangeText={setOtp}
-              placeholder="Enter OTP"
-              placeholderTextColor="#94a3b8"
-              keyboardType="number-pad"
-            />
-            <TouchableOpacity style={styles.primaryButton} onPress={verifyOtp}>
-              <Text style={styles.primaryButtonText}>Verify OTP</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+          )}
 
-        <FormNotification notification={notification} />
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <FormNotification notification={notification} />
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#f8fafc",
+  },
   container: {
     flex: 1,
     backgroundColor: "#f8fafc",
@@ -246,84 +338,230 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: 32,
+    gap: 14,
+  },
+  pageHeader: {
+    gap: 4,
+    marginBottom: 2,
   },
   header: {
     color: "#0f172a",
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: "800",
-    marginBottom: 4,
   },
   subtitle: {
-    color: "#475569",
-    marginBottom: 18,
+    color: "#64748b",
+    lineHeight: 21,
   },
-  card: {
-    backgroundColor: "#ffffff",
-    borderRadius: 22,
-    padding: 16,
+  profileHeaderCard: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    padding: 14,
     shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 14,
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
+    elevation: 2,
+  },
+  avatarCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#0f172a",
+  },
+  avatarText: {
+    color: "#ffffff",
+    fontWeight: "900",
+  },
+  profileText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  profileName: {
+    color: "#0f172a",
+    fontSize: 17,
+    fontWeight: "800",
+  },
+  profileMeta: {
+    color: "#64748b",
+    marginTop: 2,
+  },
+  groupCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    padding: 14,
+    gap: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+  },
+  groupHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 10,
+  },
+  groupTitle: {
+    color: "#0f172a",
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  helperText: {
+    color: "#64748b",
+    lineHeight: 20,
+  },
+  checkingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    minHeight: 56,
+  },
+  checkingAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#e2e8f0",
+  },
+  checkingTextBlock: {
+    flex: 1,
+    gap: 8,
+  },
+  checkingLineWide: {
+    width: "58%",
+    height: 10,
+    borderRadius: 999,
+    backgroundColor: "#e2e8f0",
+  },
+  checkingLineShort: {
+    width: "38%",
+    height: 10,
+    borderRadius: 999,
+    backgroundColor: "#eef2f7",
   },
   label: {
     color: "#64748b",
-    fontWeight: "700",
-    marginBottom: 6,
-  },
-  value: {
-    color: "#0f172a",
-    marginBottom: 12,
+    fontSize: 13,
+    fontWeight: "800",
+    marginTop: 2,
   },
   input: {
+    backgroundColor: "#f8fafc",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: "#0f172a",
+    minHeight: 44,
+  },
+  compactPrimaryButton: {
+    minHeight: 36,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#2563eb",
+  },
+  compactPrimaryText: {
+    color: "#ffffff",
+    fontWeight: "800",
+  },
+  settingsGroup: {
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+  },
+  settingsRow: {
+    minHeight: 62,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#edf2f7",
+  },
+  settingsTitle: {
+    color: "#0f172a",
+    fontWeight: "800",
+  },
+  settingsMeta: {
+    color: "#64748b",
+    marginTop: 2,
+    lineHeight: 19,
+  },
+  chevron: {
+    color: "#94a3b8",
+    fontSize: 24,
+    fontWeight: "700",
+  },
+  logoutButton: {
+    minHeight: 44,
+    alignSelf: "flex-start",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  logoutText: {
+    color: "#b91c1c",
+    fontWeight: "800",
+  },
+  segmentedControl: {
+    flexDirection: "row",
+    gap: 4,
+    padding: 4,
     backgroundColor: "#f1f5f9",
     borderRadius: 14,
-    padding: 12,
+  },
+  segmentButton: {
+    flex: 1,
+    minHeight: 38,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
+  },
+  activeSegment: {
+    backgroundColor: "#ffffff",
+  },
+  segmentText: {
+    color: "#64748b",
+    fontWeight: "800",
+  },
+  activeSegmentText: {
     color: "#0f172a",
-    marginBottom: 12,
   },
   primaryButton: {
     backgroundColor: "#1d4ed8",
-    borderRadius: 16,
-    padding: 14,
-    alignItems: "center",
-  },
-  primaryButtonText: {
-    color: "#ffffff",
-    fontWeight: "700",
-  },
-  secondaryButton: {
-    backgroundColor: "#e2e8f0",
-    borderRadius: 16,
-    padding: 14,
-    alignItems: "center",
-  },
-  secondaryButtonText: {
-    color: "#0f172a",
-    fontWeight: "700",
-  },
-  toggleRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 16,
-  },
-  toggleButton: {
-    flex: 1,
     borderRadius: 14,
     padding: 12,
     alignItems: "center",
-    backgroundColor: "#f1f5f9",
+    minHeight: 44,
   },
-  activeToggle: {
-    backgroundColor: "#1d4ed8",
+  primaryButtonText: {
+    color: "#ffffff",
+    fontWeight: "800",
   },
-  toggleText: {
+  secondaryButton: {
+    backgroundColor: "#e2e8f0",
+    borderRadius: 14,
+    padding: 12,
+    alignItems: "center",
+    minHeight: 44,
+  },
+  secondaryButtonText: {
     color: "#0f172a",
-    fontWeight: "700",
-  },
-  marginTop: {
-    marginTop: 12,
+    fontWeight: "800",
   },
 });

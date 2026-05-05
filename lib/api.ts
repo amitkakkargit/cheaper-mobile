@@ -13,6 +13,15 @@ import type {
 
 const TOKEN_KEY = 'cheaperAccessToken';
 const DEFAULT_API_BASE_URL = 'http://localhost:3001';
+let cachedCurrentUser: CurrentUser | null = null;
+
+export function getCachedCurrentUser() {
+  return cachedCurrentUser;
+}
+
+function cacheCurrentUser(user: CurrentUser | null) {
+  cachedCurrentUser = user;
+}
 
 function getConfiguredApiBaseUrl() {
   if (Platform.OS === 'web') {
@@ -117,20 +126,26 @@ export async function verifyEmailOtp(email: string, otp: string) {
 
 export async function getCurrentUser() {
   try {
-    return await apiFetch<CurrentUser>('/auth/me');
+    const currentUser = await apiFetch<CurrentUser>('/auth/me');
+    cacheCurrentUser(currentUser);
+    return currentUser;
   } catch {
+    cacheCurrentUser(null);
     return null;
   }
 }
 
 export async function updateProfile(data: { name?: string; avatarUrl?: string }) {
-  return apiFetch<CurrentUser>('/users/me', {
+  const updatedUser = await apiFetch<CurrentUser>('/users/me', {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
+  cacheCurrentUser(updatedUser);
+  return updatedUser;
 }
 
 export async function clearUserSession() {
+  cacheCurrentUser(null);
   await clearAccessToken();
 }
 
